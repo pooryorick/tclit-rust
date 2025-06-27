@@ -111,4 +111,10 @@ fn main() -> TkResult<()> {
 
 # License
 
-Under Apache License 2.0 or MIT License, at your will.
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+To license this program under other terms, contact the author(s) of the
+program.
