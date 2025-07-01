@@ -22,7 +22,7 @@ use std::{
     fmt::{self, Display},
     mem::MaybeUninit,
     ops::AddAssign,
-    os::raw::{c_char, c_int},
+    os::raw::{c_char},
     pin::Pin,
     slice,
 };
@@ -65,12 +65,12 @@ impl DString {
         }
     }
 
-    pub fn into_c_str( self ) -> (c_int, *mut c_char) {
+    pub fn into_c_str( self ) -> (clib::Tcl_Size, *mut c_char) {
         let tcl_dstring = &*self.0;
-        let len = tcl_dstring.length as u32;
-        let s = unsafe{ clib::Tcl_Alloc( len + 1 )};
+        let len: clib::Tcl_Size = tcl_dstring.length;
+        let s = unsafe{ clib::Tcl_Alloc( len as usize + 1 )} as *mut c_char;
         unsafe{ std::ptr::copy_nonoverlapping( tcl_dstring.string, s, len as usize + 1 ); }
-        (len as c_int, s)
+        (len, s)
     }
 
     fn as_mut_ptr( &mut self ) -> *mut Tcl_DString { unsafe{ self.0.as_mut().get_unchecked_mut() as *mut _ }}
@@ -143,7 +143,7 @@ pub fn to_string<T:Serialize>( value: &T ) -> Result<String> {
 /// # Errors
 ///
 /// Serialization will never fail.
-pub fn to_c_str<T:Serialize>( value: &T ) -> Result<(c_int, *mut c_char)> {
+pub fn to_c_str<T:Serialize>( value: &T ) -> Result<(clib::Tcl_Size, *mut c_char)> {
     let mut serializer = Serializer::new();
     value.serialize( &mut serializer )?;
     Ok( serializer.output.into_c_str() )

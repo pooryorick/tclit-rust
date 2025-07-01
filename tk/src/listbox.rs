@@ -30,10 +30,6 @@ use std::{
         RangeInclusive,
         RangeToInclusive,
     },
-    os::raw::{
-        c_int,
-        c_longlong,
-    },
 };
 
 use tcl::{
@@ -52,15 +48,15 @@ use tuplex::*;
 pub struct TkListbox<Inst:TkInstance>( pub(crate) Widget<Inst> );
 
 pub enum Index {
-    Number( c_int ),
+    Number( clib::Tcl_Size ),
     Active,
     Anchor,
     End,
-    At( c_int ),
+    At( clib::Tcl_Size ),
 }
 
-impl From<c_int> for Index {
-    fn from( number: c_int ) -> Self { Index::Number( number )}
+impl From<clib::Tcl_Size> for Index {
+    fn from( number: clib::Tcl_Size ) -> Self { Index::Number( number )}
 }
 
 impl TkDefaultStart for Index {
@@ -71,8 +67,8 @@ impl TkDefaultEnd for Index {
     fn default_end() -> Self { Index::End }
 }
 
-impl From<RangeFrom<c_int>> for TkRange<Index> { // a..
-    fn from( r: RangeFrom<c_int> ) -> Self {
+impl From<RangeFrom<clib::Tcl_Size>> for TkRange<Index> { // a..
+    fn from( r: RangeFrom<clib::Tcl_Size> ) -> Self {
         TkRange {
             start : Index::Number( r.start ),
             end   : Index::default_end()
@@ -80,8 +76,8 @@ impl From<RangeFrom<c_int>> for TkRange<Index> { // a..
     }
 }
 
-impl From<RangeInclusive<c_int>> for TkRange<Index> { // a..=b
-    fn from( r: RangeInclusive<c_int> ) -> Self {
+impl From<RangeInclusive<clib::Tcl_Size>> for TkRange<Index> { // a..=b
+    fn from( r: RangeInclusive<clib::Tcl_Size> ) -> Self {
         TkRange {
             start : Index::Number( *r.start() ),
             end   : Index::Number( *r.end() )
@@ -89,8 +85,8 @@ impl From<RangeInclusive<c_int>> for TkRange<Index> { // a..=b
     }
 }
 
-impl From<RangeToInclusive<c_int>> for TkRange<Index> { // ..=b
-    fn from( r: RangeToInclusive<c_int> ) -> Self {
+impl From<RangeToInclusive<clib::Tcl_Size>> for TkRange<Index> { // ..=b
+    fn from( r: RangeToInclusive<clib::Tcl_Size> ) -> Self {
         TkRange {
             start : Index::default_start(),
             end   : Index::Number( r.end ),
@@ -117,9 +113,9 @@ impl<Inst:TkInstance> TkListbox<Inst> {
     }
 
     #[cex]
-    pub fn curselection( &self ) -> Result!( Vec<c_int> throws DeError, InterpError ) {
+    pub fn curselection( &self ) -> Result!( Vec<clib::Tcl_Size> throws DeError, InterpError ) {
         let obj = self.0.tk().eval(( self.0.path, "curselection" ))?;
-        ret!( from_obj::<Vec<c_int>>( obj ));
+        ret!( from_obj::<Vec<clib::Tcl_Size>>( obj ));
     }
 
     /// Deletes one element of the listbox.
@@ -260,9 +256,9 @@ impl<Inst:TkInstance> TkListbox<Inst> {
         Ok( obj.get_elements()?.collect::<Vec<_>>() )
     }
 
-    pub fn index( &self, index: impl Into<Index> ) -> InterpResult<c_longlong> {
+    pub fn index( &self, index: impl Into<Index> ) -> InterpResult<clib::Tcl_Size> {
         let result = self.0.tk().eval(( self.0.path, "index", index.into() ))?;
-        self.0.tk().longlong( result )
+        self.0.tk().tclsize( result )
     }
 
     pub fn insert( &self, index: impl Into<Index>, elements: impl IntoIterator<Item=Obj> ) -> InterpResult<()> {
@@ -297,16 +293,16 @@ impl<Inst:TkInstance> TkListbox<Inst> {
         self.tk().run( command )
     }
 
-    pub fn nearest( &self, y: c_int ) -> InterpResult<c_longlong> {
+    pub fn nearest( &self, y: clib::Tcl_Size ) -> InterpResult<clib::Tcl_Size> {
         let obj = self.0.tk().eval(( self.0.path, "nearest", y ))?;
-        self.0.tk().longlong( obj )
+        self.0.tk().tclsize( obj )
     }
 
-    pub fn scan_mark( &self, x: c_int, y: c_int ) -> InterpResult<()> {
+    pub fn scan_mark( &self, x: clib::Tcl_Size, y: clib::Tcl_Size ) -> InterpResult<()> {
         self.0.tk().run(( self.0.path, "scan", "mark", x, y ))
     }
 
-    pub fn scan_dragto( &self, x: c_int, y: c_int ) -> InterpResult<()> {
+    pub fn scan_dragto( &self, x: clib::Tcl_Size, y: clib::Tcl_Size ) -> InterpResult<()> {
         self.0.tk().run(( self.0.path, "scan", "dragto", x, y ))
     }
 
@@ -341,9 +337,9 @@ impl<Inst:TkInstance> TkListbox<Inst> {
         self.tk().run(( self.path, "selection", "set", range.start, range.end ))
     }
 
-    pub fn size( &self ) -> InterpResult<c_longlong> {
+    pub fn size( &self ) -> InterpResult<clib::Tcl_Size> {
         let obj = self.0.tk().eval(( self.0.path, "size" ))?;
-        self.0.tk().longlong( obj )
+        self.0.tk().tclsize( obj )
     }
 }
 

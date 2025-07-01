@@ -398,7 +398,7 @@ pub fn main_loop() {
             let script = TEST_MAIN_WINDOW.as_ptr() as *const _;
             for (_, engine) in instances.borrow().iter() {
                 let tcl_interp = engine.interpreter.as_ptr();
-                if unsafe{ clib::Tcl_Eval( tcl_interp, script )} == clib::TCL_OK as c_int {
+                if unsafe{ clib::Tcl_EvalEx( tcl_interp, script, -1, 0)} == clib::TCL_OK as c_int {
                     return false;
                 }
             }

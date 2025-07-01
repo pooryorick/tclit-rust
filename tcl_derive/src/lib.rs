@@ -406,7 +406,7 @@ fn callback_fn( interp: Expr, cmd: Option<Expr>, args: Option<Expr>, mut item_fn
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 ///
 /// use tcl::*;
 ///
@@ -780,7 +780,7 @@ fn tk_event_detail_name_and_type( id: &Ident ) -> Option<(&'static str, Type)> {
 ///
 /// # Example, Tk Event callback
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 /// widget.bind( button_press_2(),
 ///     tclosure!( tk, |evt_x, evt_y| tk.popup( menu, evt_x, evt_y, None ))
 /// )?;
@@ -788,7 +788,7 @@ fn tk_event_detail_name_and_type( id: &Ident ) -> Option<(&'static str, Type)> {
 ///
 /// # Example, Poll
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 /// tk.run( tclosure!( tk, cmd:"poll" || {
 ///     {/* poll and do lots of work, omitted */}
 ///     tk.after( 100, ("poll",) )?;

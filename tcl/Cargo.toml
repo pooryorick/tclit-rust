@@ -1,7 +1,8 @@
 [package]
 name = "tcl"
 version = "0.1.9"
-authors = ["oooutlk <oooutlk@outlook.com>"]
+authors = ["oooutlk <oooutlk@outlook.com>"
+	, "Poor Yorick ethereum 0x0b5049C148b00a216B29641ab16953b6060Ef8A6 <FKZ07MMhpEiXkzJX5-HLfw9PsdeL_sKULlPCVSbBoZE@pooryorick.com>"]
 edition = "2021"
 license = "AGPL-3.0"
 keywords = [ "tcl", "binding" ]
@@ -11,7 +12,8 @@ categories = [ "api-bindings" ]
 description = "Rust bindings for Tcl language"
 
 [dependencies]
-clib = "0.2.4"
+#clib = "0.2.4"
+clib = { git = "https://github.com/pooryorick/clib" }
 mutf8 = "0.2.0"
 tuplex = "0.1"
 serde = { version = "1.0", features=["derive"] }
@@ -24,18 +26,18 @@ cex = "0.5"
 inwelling = "0.5.2"
 
 [package.metadata.inwelling.clib]
-build = ["tcl86"]
+build = ["tclit90"]
 
-[package.metadata.inwelling.clib.spec.tcl86]
-pc-alias = ["tcl","tcl8.6"]
+[package.metadata.inwelling.clib.spec.tclit90]
+#pc-alias = ["tcl","tcl9.0"]
 headers = ["tcl.h"]
-exe = ["tclsh86", "tclsh"]
-includedir = ["tcl8.6", "tcl"]
-for-docs-rs = "for_docs.rs"
+exe = ["tclsh9.0"]
+includedir = ["" ,"tcl9.0"]
+#for-docs-rs = "for_docs.rs"
 
-[package.metadata.inwelling.clib.spec.tcl86.libs]
-tcl = ["libtcl86.so", "libtcl8.6.so", "libtcl.so", "libtcl86.a", "libtcl.a", "libtcl86.dll.a", "libtcl.dll.a", "tcl86t.dll", "tcl86t.lib"]
-tclstub = ["libtclstub86.a", "libtclstub8.6.a", "libtclstub.a", "tclstub86.lib"]
+[package.metadata.inwelling.clib.spec.tclit90.libs]
+tcl = ["libtcl90.so", "libtcl9.0.so", "libtcl.so", "libtcl90.a", "libtcl.a", "libtcl90.dll.a", "libtcl.dll.a", "tcl90t.dll", "tcl90t.lib"]
+tclstub = ["libtclstub90.a", "libtclstub9.0.a", "libtclstub.a", "tclstub90.lib"]
 
 [features]
 cex_log = ["cex/log"]

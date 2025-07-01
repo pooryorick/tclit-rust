@@ -1019,7 +1019,7 @@ macro_rules! def_geometry_managers {
 
             pub fn $fn_info( &self ) -> InterpResult<HashMap<String,Obj>> {
                 let list = self.tk().eval(( $str, "info", self.deref().path ))?;
-                let mut len: c_int = 0;
+                let mut len: clib::Tcl_Size = 0;
                 let mut m;
 
                 unsafe {
@@ -1056,7 +1056,7 @@ macro_rules! def_geometry_managers {
 
                 let paths = Obj::from( paths_opts.path );
                 unsafe {
-                    let mut _num_paths: c_int = 0;
+                    let mut _num_paths: clib::Tcl_Size = 0;
                     clib::Tcl_ListObjLength( self.as_ptr(), paths.as_ptr(), &mut _num_paths as *mut _ );
                 }
 

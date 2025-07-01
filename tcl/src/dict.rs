@@ -174,13 +174,13 @@ impl Obj {
     /// let obj = vec![ "C++", "1983", "Rust", "2006" ];
     /// assert_eq!( map.dict_size().unwrap(), 2 );
     /// ```
-    pub fn dict_size( &self ) -> Result<c_int, NotDict> {
-        let mut size: c_int = 0;
+    pub fn dict_size( &self ) -> Result<clib::Tcl_Size, NotDict> {
+        let mut size: clib::Tcl_Size = 0;
         unsafe {
             clib::Tcl_DictObjSize(
                 null_mut(),
                 self.as_ptr(),
-                &mut size as *mut c_int,
+                &mut size as *mut clib::Tcl_Size,
         )}
         .unit_result()
         .map( |_| size )

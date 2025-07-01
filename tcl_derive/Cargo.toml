@@ -1,7 +1,8 @@
 [package]
 name = "tcl_derive"
 version = "0.1.5"
-authors = ["oooutlk <oooutlk@outlook.com>"]
+authors = ["oooutlk <oooutlk@outlook.com>"
+	, "Poor Yorick ethereum 0x0b5049C148b00a216B29641ab16953b6060Ef8A6 <FKZ07MMhpEiXkzJX5-HLfw9PsdeL_sKULlPCVSbBoZE@pooryorick.com>"]
 edition = "2021"
 license = "AGPL-3.0"
 keywords = [ "tcl", "binding", "proc" ]

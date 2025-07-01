@@ -44,7 +44,7 @@ impl Deserializer {
 
     fn peek( &self ) -> &Obj { self.stack.last().unwrap() }
 
-    fn peek_len( &self ) -> Result<c_int> { Ok( self.peek().list_length()? )}
+    fn peek_len( &self ) -> Result<clib::Tcl_Size> { Ok( self.peek().list_length()? )}
 
     fn parse_bool( &mut self ) -> Result<bool> { bool::try_from( self.pop() )}
     fn parse_u8(   &mut self ) -> Result<u8>   {   u8::try_from( self.pop() )}
@@ -169,7 +169,7 @@ impl<'a,'de:'a> de::Deserializer<'de> for &'a mut Deserializer {
 struct ListAccess<'a> {
     de    : &'a mut Deserializer,
     list  : Obj,
-    index : c_int,
+    index : clib::Tcl_Size,
 }
 
 impl<'a> ListAccess<'a> {

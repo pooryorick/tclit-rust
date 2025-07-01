@@ -141,7 +141,7 @@ impl Obj {
     /// is invalid, the string representation is regenerated from the value's internal
     /// representation.
     pub fn get_string( &self ) -> String {
-        let mut len: c_int = 0;
+        let mut len: clib::Tcl_Size = 0;
         unsafe {
             let data = clib::Tcl_GetStringFromObj( self.as_ptr(), &mut len as *mut _ ) as *const u8;
             let slice = slice::from_raw_parts( data, len as usize );
@@ -169,7 +169,7 @@ impl Obj {
     pub fn is_empty( &self ) -> bool {
         unsafe {
             let tcl_obj = &*(self.as_ptr() as *const clib::Tcl_Obj);
-            let mut len: c_int = tcl_obj.length;
+            let mut len: clib::Tcl_Size = tcl_obj.length;
 
             if tcl_obj.bytes.is_null() {
                 let _ = clib::Tcl_GetStringFromObj( self.as_ptr(), &mut len as *mut _ ) as *const u8;
@@ -222,7 +222,7 @@ impl From<bool> for Obj {
     fn from( b: bool ) -> Obj {
         crate::init();
         unsafe {
-            Obj::from_raw( clib::Tcl_NewIntObj( if b {1} else {0} ))
+            Obj::from_raw( clib::Tcl_NewWideIntObj( if b {1} else {0} ))
         }
     }
 }
@@ -270,11 +270,11 @@ macro_rules! obj_from_int {
     };
 }
 
-obj_from_int!( Tcl_NewIntObj      i8   => c_int      );
-obj_from_int!( Tcl_NewIntObj      u8   => c_int      );
-obj_from_int!( Tcl_NewIntObj     i16   => c_int      );
-obj_from_int!( Tcl_NewIntObj     u16   => c_int      );
-obj_from_int!( Tcl_NewIntObj     i32   => c_int      );
+obj_from_int!( Tcl_NewWideIntObj      i8   => clib::Tcl_WideInt);
+obj_from_int!( Tcl_NewWideIntObj      u8   => clib::Tcl_WideInt);
+obj_from_int!( Tcl_NewWideIntObj     i16   => clib::Tcl_WideInt);
+obj_from_int!( Tcl_NewWideIntObj     u16   => clib::Tcl_WideInt);
+obj_from_int!( Tcl_NewWideIntObj     i32   => clib::Tcl_WideInt);
 obj_from_int!( Tcl_NewWideIntObj u32   => c_longlong );
 obj_from_int!( Tcl_NewWideIntObj i64   => c_longlong );
 obj_from_int!( Tcl_NewWideIntObj isize => c_longlong );
@@ -451,7 +451,7 @@ impl<'a> From<&'a str> for Obj {
     fn from( s: &'a str ) -> Obj {
         crate::init();
         let cow = mstr::from_utf8( s.as_bytes() );
-        unsafe{ Obj::from_raw( clib::Tcl_NewStringObj( cow.as_ptr() as *const c_char, cow.len() as c_int ))}
+        unsafe{ Obj::from_raw( clib::Tcl_NewStringObj( cow.as_ptr() as *const c_char, cow.len() as clib::Tcl_Size))}
     }
 }
 
@@ -459,7 +459,7 @@ impl From<String> for Obj {
     fn from( s: String ) -> Obj {
         crate::init();
         let cow = mstr::from_utf8( s.as_bytes() );
-        unsafe{ Obj::from_raw( clib::Tcl_NewStringObj( cow.as_ptr() as *const c_char, cow.len() as c_int ))}
+        unsafe{ Obj::from_raw( clib::Tcl_NewStringObj( cow.as_ptr() as *const c_char, cow.len() as clib::Tcl_Size))}
     }
 }
 
@@ -475,7 +475,7 @@ impl From<CString> for Obj {
     fn from( s: CString ) -> Obj {
         crate::init();
         let cow = mstr::from_utf8( s.as_bytes() );
-        unsafe{ Obj::from_raw( clib::Tcl_NewStringObj( cow.as_ptr() as *const c_char, cow.len() as c_int ))}
+        unsafe{ Obj::from_raw( clib::Tcl_NewStringObj( cow.as_ptr() as *const c_char, cow.len() as clib::Tcl_Size ))}
     }
 }
 
@@ -523,7 +523,7 @@ impl<T,O> From<&[T]> for Obj
     fn from( v: &[T] ) -> Obj {
         crate::init();
         let v: Box<[*mut clib::Tcl_Obj]> = v.iter().map( |e| e.to_owned().into().into_raw() ).collect();
-        let list = unsafe{ clib::Tcl_NewListObj( v.len() as c_int, v.as_ptr() as *const *mut clib::Tcl_Obj )};
+        let list = unsafe{ clib::Tcl_NewListObj( v.len() as clib::Tcl_Size, v.as_ptr() as *const *mut clib::Tcl_Obj )};
         mem::forget( v );
         unsafe{ Obj::from_raw( list )}
     }
@@ -535,7 +535,7 @@ impl<T> From<Vec<T>> for Obj
     fn from( v: Vec<T> ) -> Obj {
         crate::init();
         let v: Box<[*mut clib::Tcl_Obj]> = v.into_iter().map( |e| e.into().into_raw() ).collect();
-        let list = unsafe{ clib::Tcl_NewListObj( v.len() as c_int, v.as_ptr() as *const *mut clib::Tcl_Obj )};
+        let list = unsafe{ clib::Tcl_NewListObj( v.len() as clib::Tcl_Size, v.as_ptr() as *const *mut clib::Tcl_Obj )};
         mem::forget( v );
         unsafe{ Obj::from_raw( list )}
     }
@@ -625,7 +625,7 @@ impl<Tup,HTup,MTup> From<Tup> for Obj
             .map_homo_tuple( |obj| obj.into_raw() )
             .into_array();
 
-        let objc = array.len() as c_int;
+        let objc = array.len() as clib::Tcl_Size;
         if objc == 0 {
             Obj::new()
         } else {
@@ -708,7 +708,7 @@ tuple_from_obj!{
 pub unsafe fn incr_ref( tcl_obj: *mut clib::Tcl_Obj ) {
     (*tcl_obj).refCount += 1;
     if (*tcl_obj).refCount == 1 {
-        let mut len: c_int = 0;
+        let mut len: clib::Tcl_Size = 0;
         let _s = {
             let data = clib::Tcl_GetStringFromObj( tcl_obj, &mut len ) as *const u8;
             let slice = slice::from_raw_parts( data, len as usize );
@@ -728,7 +728,7 @@ pub unsafe fn decr_ref( tcl_obj: *mut clib::Tcl_Obj ) {
     (*tcl_obj).refCount -= 1;
     if (*tcl_obj).refCount <= 0 {
 
-        let mut len: c_int = 0;
+        let mut len: clib::Tcl_Size = 0;
         let _s = {
             let data = clib::Tcl_GetStringFromObj( tcl_obj, &mut len ) as *const u8;
             let slice = slice::from_raw_parts( data, len as usize );

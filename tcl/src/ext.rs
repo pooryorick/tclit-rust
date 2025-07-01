@@ -30,7 +30,7 @@ use std::{
     hash::{Hash, Hasher},
     mem,
     ops::Deref,
-    os::raw::{c_void, c_int},
+    os::raw::{c_char, c_void, c_int},
     ptr::{self, NonNull, null_mut},
 };
 
@@ -136,6 +136,7 @@ impl<T> Register for Tcl<T>
         let c_string = type_id_to_c_string::<Self>();
         let name = c_string.as_ptr();
         mem::forget( c_string );
+		let objversion = 0;
 
         unsafe {
             clib::Tcl_RegisterObjType( Box::into_raw( Box::new( clib::Tcl_ObjType{
@@ -144,6 +145,7 @@ impl<T> Register for Tcl<T>
                 dupIntRepProc   : Some( Tcl::<T>::dup_internal_rep  ),
                 updateStringProc: Some( Tcl::<T>::update_string     ),
                 setFromAnyProc  : Some( Tcl::<T>::set_from_any      ),
+				version			: objversion
             })));
         }
     }
@@ -300,6 +302,7 @@ impl Register for u64 {
         let c_string = type_id_to_c_string::<Self>();
         let name = c_string.as_ptr();
         mem::forget( c_string );
+		let objversion = 0;
 
         unsafe {
             clib::Tcl_RegisterObjType( Box::into_raw( Box::new( clib::Tcl_ObjType{
@@ -308,6 +311,7 @@ impl Register for u64 {
                 dupIntRepProc   : Some( u64_dup_internal_rep ),
                 updateStringProc: Some( u64_update_string    ),
                 setFromAnyProc  : Some( u64_set_from_any     ),
+				version         : objversion
             })));
         }
     }
@@ -320,11 +324,11 @@ unsafe extern "C" fn u64_dup_internal_rep( src: *mut clib::Tcl_Obj, dup: *mut cl
 
 unsafe extern "C" fn u64_update_string( obj_ptr: *mut clib::Tcl_Obj ) {
     let s = ( (*obj_ptr).internalRep.twoPtrValue.ptr1 as u64 ).to_string();
-    let result = clib::Tcl_Alloc( s.len() as u32 + 1 );
+    let result = clib::Tcl_Alloc( s.len() as usize + 1 );
     std::ptr::copy_nonoverlapping( s.as_ptr(), result as *mut u8, s.len() + 1 );
 
-    (*obj_ptr).length =  s.len() as c_int;
-    (*obj_ptr).bytes = result;
+    (*obj_ptr).length =  s.len() as clib::Tcl_Size;
+    (*obj_ptr).bytes = result as *mut c_char;
 }
 
 unsafe extern "C" fn u64_set_from_any( _interp: *mut clib::Tcl_Interp, obj_ptr: *mut clib::Tcl_Obj ) -> c_int {

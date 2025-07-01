@@ -1,7 +1,8 @@
 [package]
 name = "tk"
 version = "0.1.10"
-authors = ["oooutlk <oooutlk@outlook.com>"]
+authors = ["oooutlk <oooutlk@outlook.com>"
+	, "Poor Yorick ethereum 0x0b5049C148b00a216B29641ab16953b6060Ef8A6 <FKZ07MMhpEiXkzJX5-HLfw9PsdeL_sKULlPCVSbBoZE@pooryorick.com>"]
 edition = "2021"
 license = "AGPL-3.0"
 keywords = [ "gui", "tcl", "tk", "binding" ]
@@ -15,7 +16,8 @@ description = "Rust bindings for Tk GUI library"
 bitflags = "1.0"
 enumx = "0.4"
 cex = "0.5"
-clib = "0.2.4"
+#clib = "0.2.4"
+clib = { git = "https://github.com/pooryorick/clib" }
 heredom = "0.1"
 serde = { version = "1.0", features=["derive"] }
 tcl = { path = "../tcl", version = "0.1.8" }
@@ -40,16 +42,16 @@ cex_pretty_log = ["cex/pretty_log", "tcl/cex_pretty_log"]
 cex_enum32 = ["cex/enum32", "tcl/cex_enum32"]
 
 [package.metadata.inwelling.clib]
-build = ["tk86"]
+build = ["tk90"]
 
-[package.metadata.inwelling.clib.spec.tk86]
-pc-alias = ["tk","tk8.6"]
+[package.metadata.inwelling.clib.spec.tk90]
+pc-alias = ["tk","tk9.0"]
 headers = ["tk.h"]
-dependencies = ["tcl86"]
+dependencies = ["tcl90"]
 header-dependencies = ["x11"]
-exe = ["wish86", "wish"]
-includedir = ["tk8.6", "tk"]
+exe = ["wish90", "wish"]
+includedir = ["tk9.0", "tk"]
 
-[package.metadata.inwelling.clib.spec.tk86.libs]
-tk = ["libtk86.so", "libtk8.6.so", "libtk.so", "libtk86.a", "libtk.a", "libtk86.dll.a", "libtk.dll.a", "tk86t.dll", "tk86t.lib"]
-tkstub = ["libtkstub86.a", "libtkstub8.6.a", "libtkstub.a", "tkstub86.lib"]
+[package.metadata.inwelling.clib.spec.tk90.libs]
+tk = ["libtk90.so", "libtk9.0.so", "libtk.so", "libtk90.a", "libtk.a", "libtk90.dll.a", "libtk.dll.a", "tk90.dll", "tk90.lib"]
+tkstub = ["libtkstub90.a", "libtkstub9.0.a", "libtkstub.a", "tkstub90.lib"]

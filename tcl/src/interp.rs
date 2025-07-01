@@ -361,7 +361,7 @@ impl Interp {
         let flags = ( clib::TCL_LEAVE_ERR_MSG ) as c_int;
         if let Ok( var_name ) = CString::new( var_name ) {
             unsafe {
-                clib::Tcl_UnsetVar( self.0.as_ptr(), var_name.as_ptr(), flags )
+                clib::Tcl_UnsetVar2( self.0.as_ptr(), var_name.as_ptr(), ptr::null(), flags )
                     .code_to_result( self )
             }
         } else {
@@ -377,7 +377,7 @@ impl Interp {
         let flags: c_int = 0;
         if let Ok( var_name ) = CString::new( var_name ) {
             unsafe {
-                clib::Tcl_UnsetVar( self.0.as_ptr(), var_name.as_ptr(), flags );
+                clib::Tcl_UnsetVar2( self.0.as_ptr(), var_name.as_ptr(), ptr::null(), flags );
             }
         }
     }
@@ -501,6 +501,16 @@ impl Interp {
         }
     }
 
+
+    pub fn tclsize( &self, val: impl Into<Obj> ) -> Result<clib::Tcl_Size> {
+        let mut value: clib::Tcl_Size = 0;
+        unsafe {
+            clib::Tcl_GetSizeIntFromObj( self.0.as_ptr(), val.into().as_ptr(), &mut value as *mut _ )
+                .code_to_result( self )
+                .map( |_| value )
+        }
+    }
+
     /// Gets `c_longlong` value of variable `var` defined in the intepreter.
     pub fn get_longlong( &self, var: impl Into<Obj> ) -> Result<c_longlong> {
         let val = self.get( var.into() )?;
@@ -594,10 +604,11 @@ impl Interp {
         let name = CString::new(name).expect("Tcl package name should be CString.");
         let version = CString::new(version).expect("Tcl package version should be CString.");
         unsafe {
-            clib::Tcl_PkgProvide(
+            clib::Tcl_PkgProvideEx(
                 self.as_ptr(),
                 name.as_c_str().as_ptr(),
                 version.as_c_str().as_ptr(),
+				ptr::null()
             )
         }
     }
@@ -630,29 +641,30 @@ impl Interp {
         }
     }
 
-    /// Marks interp as “safe”, so that future calls to `Interp::is_safe()` will return
-    /// true. It also removes all known potentially-unsafe core functionality (both
-    /// commands and variables) from interp. However, it cannot know what parts of an
-    /// extension or application are safe and does not make any attempt to remove those
-    /// parts, so safety is not guaranteed after calling `Interp::make_safe()`. Callers
-    /// will want to take care with their use of `Interp::make_safe()` to avoid false
-    /// claims of safety. For many situations, `Interp::create_child()` may be a better
-    /// choice, since it creates interpreters in a known-safe state.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use tcl::*;
-    /// let interpreter = Interpreter::new().unwrap();
-    /// assert!( !interpreter.is_safe() );
-    /// interpreter.make_safe().unwrap();
-    /// assert!( interpreter.is_safe() );
-    /// ```
-    pub fn make_safe( &self ) -> Result<()> {
-        unsafe {
-            clib::Tcl_MakeSafe( self.as_ptr() ).code_to_result( self )
-        }
-    }
+	// Tcl_MakeSafe gone in Tcl 9.0
+    ///// Marks interp as “safe”, so that future calls to `Interp::is_safe()` will return
+    ///// true. It also removes all known potentially-unsafe core functionality (both
+    ///// commands and variables) from interp. However, it cannot know what parts of an
+    ///// extension or application are safe and does not make any attempt to remove those
+    ///// parts, so safety is not guaranteed after calling `Interp::make_safe()`. Callers
+    ///// will want to take care with their use of `Interp::make_safe()` to avoid false
+    ///// claims of safety. For many situations, `Interp::create_child()` may be a better
+    ///// choice, since it creates interpreters in a known-safe state.
+    /////
+    ///// # Example
+    /////
+    ///// ```rust
+    ///// use tcl::*;
+    ///// let interpreter = Interpreter::new().unwrap();
+    ///// assert!( !interpreter.is_safe() );
+    ///// interpreter.make_safe().unwrap();
+    ///// assert!( interpreter.is_safe() );
+    ///// ```
+    //pub fn make_safe( &self ) -> Result<()> {
+    //    unsafe {
+    //        clib::Tcl_MakeSafe( self.as_ptr() ).code_to_result( self )
+    //    }
+    //}
 
     /// Creates a new interpreter as a child of interp. It also creates a child command
     /// named `name` in interp which allows interp to manipulate the new child. If
@@ -675,7 +687,7 @@ impl Interp {
         let name = CString::new( name )
             .expect("tcl::Interp::create_child(): child interp's name should be CString.");
         unsafe {
-            Ok( Interpreter( Interp::from_raw( clib::Tcl_CreateSlave(
+            Ok( Interpreter( Interp::from_raw( clib::Tcl_CreateChild(
                 self.as_ptr(),
                 name.as_c_str().as_ptr(),
                 is_safe as c_int
@@ -704,7 +716,7 @@ impl Interp {
     pub unsafe fn get_child( &self, name: &str ) -> Option<Interp> {
         let name = CString::new( name )
             .expect("tcl::Interp::get_child(): child interp's name should be CString.");
-        Interp::from_raw( clib::Tcl_GetSlave(
+        Interp::from_raw( clib::Tcl_GetChild(
             self.as_ptr(),
             name.as_c_str().as_ptr()
         )).ok()
@@ -728,7 +740,7 @@ impl Interp {
     /// // DO NOT DO THIS: parent_interp.run("puts {hello,world!}").unwrap(); // oops!
     /// ```
     pub unsafe fn get_parent( &self ) -> Option<Interp> {
-        Interp::from_raw( clib::Tcl_GetMaster(
+        Interp::from_raw( clib::Tcl_GetParent(
             self.as_ptr(),
         )).ok()
     }
@@ -743,9 +755,9 @@ impl Interp {
     /// ```rust
     /// use tcl::*;
     /// let interpreter = Interpreter::new().unwrap();
-    /// interpreter.make_safe().unwrap();
+    /// interpreter.hide_command( "pwd", "hide_pwd" ).unwrap();
     /// assert!( interpreter.run("pwd").is_err() );
-    /// interpreter.expose_command( "pwd", "do_pwd" ).unwrap();
+    /// interpreter.expose_command( "hide_pwd", "do_pwd" ).unwrap();
     /// assert!( interpreter.run("do_pwd").is_ok() );
     /// ```
     pub fn expose_command( &self, hidden_cmd_name: &str, cmd_name: &str ) -> Result<()> {

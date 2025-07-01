@@ -7,7 +7,6 @@ use crate::{
 };
 
 use std::{
-    os::raw::c_int,
     mem,
     ptr::null_mut,
     slice,
@@ -19,7 +18,7 @@ impl Obj {
     /// Creates a new value as a Tcl list obj to hold `objs`.
     pub fn new_list( objs: impl Iterator<Item=Obj> ) -> Obj {
         let objs: Box<[*mut clib::Tcl_Obj]> = objs.map( Obj::into_raw ).collect();
-        let objc = objs.len() as c_int;
+        let objc = objs.len() as clib::Tcl_Size;
         let objv = objs.as_ptr() as *const *mut clib::Tcl_Obj;
         let list = unsafe{ clib::Tcl_NewListObj( objc, objv )};
         mem::forget( objs );
@@ -28,13 +27,13 @@ impl Obj {
 
     /// Creates a new, empty Tcl list obj with the specified capacity.
     pub fn new_list_with_capacity( cap: usize ) -> Obj {
-        unsafe{ Obj::from_raw( clib::Tcl_NewListObj( cap as c_int, null_mut() ))}
+        unsafe{ Obj::from_raw( clib::Tcl_NewListObj( cap as clib::Tcl_Size, null_mut() ))}
     }
 
     /// Sets the obj to hold a Tcl list composed of `objs`.
     pub fn set_list( self, objs: impl Iterator<Item=Obj> ) -> Self {
         let objs: Box<[*mut clib::Tcl_Obj]> = objs.map( Obj::into_raw ).collect();
-        let objc = objs.len() as c_int;
+        let objc = objs.len() as clib::Tcl_Size;
         let objv = objs.as_ptr() as *const *mut clib::Tcl_Obj;
         unsafe{ clib::Tcl_SetListObj( self.as_ptr(), objc, objv ); }
         mem::forget( objs );
@@ -115,7 +114,7 @@ impl Obj {
     /// let list = Obj::from(( "The", "answer", "is", 42 ));
     /// assert_eq!( list.list_length().unwrap(), 4 );
     /// ```
-    pub fn list_length( &self ) -> Result<c_int> {
+    pub fn list_length( &self ) -> Result<clib::Tcl_Size> {
         let mut len = 0;
         unsafe{ clib::Tcl_ListObjLength( null_mut(), self.as_ptr(), &mut len )}
         .unit_result()
@@ -134,7 +133,7 @@ impl Obj {
     /// assert_eq!( list.list_index(1).unwrap().unwrap().to_string(), "answer" );
     /// assert!( list.list_index(4).unwrap().is_none() );
     /// ```
-    pub fn list_index( &self, index: c_int ) -> Result<Option<Obj>> {
+    pub fn list_index( &self, index: clib::Tcl_Size ) -> Result<Option<Obj>> {
         let mut obj_ptr = null_mut();
         unsafe{ clib::Tcl_ListObjIndex( null_mut(), self.as_ptr(), index, &mut obj_ptr )}
         .unit_result()
@@ -167,9 +166,9 @@ impl Obj {
     /// list.list_replace( 2, 1, objs ).unwrap();
     /// assert_eq!( list.to_string(), "The answer to life, the universe, and everything: 42" );
     /// ```
-    pub fn list_replace( &self, first: c_int, count: c_int, objs: impl Iterator<Item=Obj> ) -> Result<()> {
+    pub fn list_replace( &self, first: clib::Tcl_Size, count: clib::Tcl_Size, objs: impl Iterator<Item=Obj> ) -> Result<()> {
         let objs: Box<[*mut clib::Tcl_Obj]> = objs.map( Obj::into_raw ).collect();
-        let objc = objs.len() as c_int;
+        let objc = objs.len() as clib::Tcl_Size;
         let objv = objs.as_ptr() as *const *mut clib::Tcl_Obj;
 
         let result = unsafe{ clib::Tcl_ListObjReplace( null_mut(), self.as_ptr(), first, count, objc, objv )}

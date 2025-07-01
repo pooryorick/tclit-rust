@@ -58,6 +58,7 @@ impl Interp {
     /// interp.after( 1000, ( "set_bar", ))?;
     ///
     /// unsafe{ clib::Tcl_DoOneEvent( 0 ); }
+    /// unsafe{ clib::Tcl_DoOneEvent( 0 ); }
     ///
     /// assert_eq!( interp.get_int("foo")?, 3 );
     /// assert_eq!( interp.get_int("bar")?, 4 );
